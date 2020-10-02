@@ -2,6 +2,8 @@ pragma solidity ^0.6.10;
 import "./Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
+// When Datastore us deployed, Auditable contract will
+// use this contract address to call functions that will update
 contract AuditableDataStore is Ownable {
     using SafeMath for uint;
 
@@ -16,7 +18,9 @@ contract AuditableDataStore is Ownable {
 
     // Struct that keeps track of contract details
     struct AuditedContractDetails {
+        bool inSystem;
         bool isAudited;
+        bool passedAudit;
         address contractAddress;
         address auditorOfContract;
     }
@@ -47,7 +51,9 @@ contract AuditableDataStore is Ownable {
         auditorDetails[_auditorAddress].totalContractsAudited = auditorDetails[_auditorAddress].totalContractsAudited.add(1);
 
         // Update details for contract
+        auditedContractDetails[_contractAddress].inSystem = true;
         auditedContractDetails[_contractAddress].isAudited = true;
+        auditedContractDetails[_contractAddress].passedAudit = false;
         auditedContractDetails[_contractAddress].contractAddress = _contractAddress;
         auditedContractDetails[_contractAddress].auditorOfContract = _auditorAddress;
     }
@@ -63,9 +69,24 @@ contract AuditableDataStore is Ownable {
         auditorDetails[_auditorAddress].totalContractsAudited = auditorDetails[_auditorAddress].totalContractsAudited.add(1);
 
         // Update details for contract
+        auditedContractDetails[_contractAddress].inSystem = true;
         auditedContractDetails[_contractAddress].isAudited = true;
+        auditedContractDetails[_contractAddress].passedAudit = true;
         auditedContractDetails[_contractAddress].contractAddress = _contractAddress;
         auditedContractDetails[_contractAddress].auditorOfContract = _auditorAddress;
+    }
+
+    // Get details of a specific
+    function getDetailsOfContract(address _contractAddress) public view returns (address _auditor, bool _isAudited, bool _passedAudit) {
+        require(auditedContractDetails[_contractAddress].inSystem == true, "Contract not in datastore");
+        return (auditedContractDetails[_contractAddress].auditorOfContract, auditedContractDetails[_contractAddress].isAudited, auditedContractDetails[_contractAddress].passedAudit);
+    }
+
+    // Get details of a specific auditor
+    function getAuditorDetails(address _auditor) public view returns (address[] _contractsApproved, address[] _contractsOpposed, uint totalContractsAudited) {
+        require(auditorDetails[_auditor].isAuditor == true, "Address not an auditor");
+        return(auditorDetails[_auditor].contractsApproved, auditorDetails[_auditor].contractsOpposed, auditorDetails[_auditor].totalContractsAudited);
+
     }
 
 
