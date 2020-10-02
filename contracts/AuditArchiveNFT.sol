@@ -8,7 +8,6 @@ contract Dawning_Chain is Ownable, ERC721 {
     uint256 public tokenID;
 
     event MintedToken(address _donator, uint256 _tokenId, uint256 _time, string _message);
-    event UpdatedMetaData(uint256 _tokenId, uint256 _time, string _message);
     event TransferAttempted(address _from, address _to, uint256 _tokenId, uint256 _time, string _message);
 
     constructor() Ownable() ERC721("Audit Archive NFT", "AAN") public {}
@@ -24,12 +23,6 @@ contract Dawning_Chain is Ownable, ERC721 {
 
         // Increment the token ID for
         tokenID = tokenID.add(1);
-    }
-
-    function updateMetadata(uint256 _tokenID, string memory _metaData) public onlyOwner() {
-        _setTokenURI(_tokenID, _metaData);
-        // Inform everyone and use a user friendly message
-        emit UpdatedMetaData(_tokenID, now, "Updated token metadata");
     }
 
     function _transfer(address from, address to, uint256 tokenId) internal virtual override {
