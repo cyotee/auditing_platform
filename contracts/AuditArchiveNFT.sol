@@ -26,12 +26,6 @@ contract Dawning_Chain is Ownable, ERC721 {
         tokenID = tokenID.add(1);
     }
 
-    function updateMetadata(uint256 _tokenID, string memory _metaData) public onlyOwner() {
-        _setTokenURI(_tokenID, _metaData);
-        // Inform everyone and use a user friendly message
-        emit UpdatedMetaData(_tokenID, now, "Updated token metadata");
-    }
-
     function _transfer(address from, address to, uint256 tokenId) internal virtual override {
         // Inform everyone and use a user friendly message
         emit TransferAttempted(from, to, tokenId, now, "The NFT is a non-fungible, non-transferable token");
