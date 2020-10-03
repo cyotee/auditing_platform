@@ -31,6 +31,10 @@ contract AuditableDataStore is Ownable {
     mapping(address => AuditedContractDetails) auditedContractDetails;
     address[] public auditors;
 
+    constructor(address _auditablePlatform) Ownable() public {
+        transferOwnership(_auditablePlatform);
+    }
+
     // Function that will allow the owner to set an auditor
     function addAuditor(address _newAuditor) public onlyOwner() {
         require(auditorDetails[_newAuditor].isAuditor == false, "Address is already an auditor");

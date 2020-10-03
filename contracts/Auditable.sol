@@ -63,6 +63,8 @@ contract Auditable is Ownable {
 
         audited = true;
 
+        auditablePlatform.delegateCall(abi.encodeWithSignature("completeAudit(string, bool"), _metaData, true);
+
         // Inform everyone and use a user friendly message
         emit ApprovedAudit(auditor, auditedContract, now, "Contract approved, functionality unlocked");
     }
@@ -74,6 +76,8 @@ contract Auditable is Ownable {
 
         // The default (unset) bool is set to false but do not rely on that; set to false to be sure.
         audited = false;
+
+        auditablePlatform.delegateCall(abi.encodeWithSignature("completeAudit(string, bool"), _metaData, false);
 
         // Inform everyone and use a user friendly message
         emit OpposedAudit(auditor, auditedContract, now, "Contract has failed the audit");
