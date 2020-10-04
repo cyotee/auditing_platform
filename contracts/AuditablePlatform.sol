@@ -3,30 +3,43 @@ import "./Ownable.sol";
 
 contract AuditablePlatform is Ownable {
 
-    address public auditArchiveNFT;
+    address public archivedNFT;
     address[] public auditors;
 
     mapping(address => bool) isAuditor;
 
-    constructor(address _auditArchiveNFT) Ownable() public {
-        auditArchiveNFT = _auditArchiveNFT;
+    constructor(address _archivedNFT) Ownable() public {
+        archivedNFT = _archivedNFT;
     }
 
-    function completeAudit(string _metaData, bool _auditPassed) returns(bool _auditPassed){
-        require(isAuditor[msg.sender] == true, "Not an auditor");
-        auditArchiveNFT.call(abi.encodeWithSignature("mint(address, string"), msg.sender, _metaData);
-        return _auditPassed;
+    function completeAudit(string memory _metaData, bool _auditPassed) returns (bool _auditPassed) {
+        require(isAuditor[msg.sender], "Not an auditor");
+
+        archivedNFT.call(abi.encodeWithSignature("mint(address, string"), msg.sender, _metaData);
+
+        // need an event
+        
+        return _auditPassed;    // wtf is this?
     }
 
-    function addAuditor(address _auditorToAdd) public onlyOwner() {
-        require(isAuditor[_auditorToAdd] == false, "Already an auditor");
-        isAuditor[_auditorToAdd] = true;
-        auditors.push(_auditorToAdd);
+    function addAuditor(address _auditor) public onlyOwner() {
+        require(!isAuditor[_auditor], "Already an auditor");
+        
+        isAuditor[_auditor] = true;
+        
+        auditors.push(_auditor);    // why?
+
+        // need an event
     }
 
-    function removeAuditor(address _auditorToRemove) public onlyOwner() {
-        require(isAuditor[_auditorToRemove] == true, "Already NOT an auditor");
-        isAuditor[_auditorToRemove] = false;
+    function removeAuditor(address _auditor) public onlyOwner() {
+        require(isAuditor[_auditor], "Already NOT an auditor");
+        
+        isAuditor[_auditor] = false;
+
+        // you've added to the array, now go and remove them
+
+        // need an event
     }
 
 
