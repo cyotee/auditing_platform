@@ -1,3 +1,4 @@
+/*
 pragma solidity ^0.6.10;
 import "./Ownable.sol";
 
@@ -35,7 +36,6 @@ contract AuditableDataStore is Ownable {
     function addAuditor(address _auditor) public onlyOwner() {
         require(!auditorDetails[_auditor].isAuditor, "Address is already an auditor");
 
-        auditors.push(_auditor);    // you have add() but no remove() and removing might be an issue with arrays because of iteration
         auditorDetails[_auditor].isAuditor = true;
         auditorDetails[_auditor].auditor = _auditor;
 
@@ -81,7 +81,7 @@ contract AuditableDataStore is Ownable {
         // need an event
     }
 
-    function contractDetails(address _contract) public view returns (address _auditor, bool _isAudited, bool _passedAudit) {
+    function contractDetails(address _contract) public view returns (address _auditor, bool _isAudited, bool ) {
         require(contractDetails[_contract].inSystem, "Contract not in datastore");
         
         return 
@@ -92,7 +92,7 @@ contract AuditableDataStore is Ownable {
         );
     }
 
-    function auditorDetails(address _auditor) public view returns (address[] _contractsApproved, address[] _contractsOpposed, uint256 _totalAudits) {
+    function auditorDetails(address _auditor) public view returns (address[] calldata _contractsApproved, address[] calldata _contractsOpposed, uint256 _totalAudits) {
         require(auditorDetails[_auditor].isAuditor, "Address not an auditor");
 
         return 
@@ -102,4 +102,4 @@ contract AuditableDataStore is Ownable {
             auditorDetails[_auditor].totalAudits
         );
     }
-}
+}*/

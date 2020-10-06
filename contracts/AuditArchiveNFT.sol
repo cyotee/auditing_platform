@@ -2,7 +2,7 @@ pragma solidity ^0.6.10;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./Ownable.sol";
 
-contract Dawning_Chain is Ownable, ERC721 {
+contract AuditArchive is Ownable, ERC721 {
 
     // Used to issue unique tokens
     uint256 public tokenID;
