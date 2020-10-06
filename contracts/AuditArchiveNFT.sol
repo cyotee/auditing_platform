@@ -7,7 +7,7 @@ contract AuditArchive is Ownable, ERC721 {
     // Used to issue unique tokens
     uint256 public tokenID;
 
-    event MintedToken(address _donator, uint256 _tokenId, uint256 _time, string _message);
+    event MintedToken(address _donator, uint256 _tokenId, uint256 _time);
     event TransferAttempted(address _from, address _to, uint256 _tokenId, uint256 _time, string _message);
 
     constructor() Ownable() ERC721("Audit Archive NFT", "AAN") public {}
@@ -20,15 +20,13 @@ contract AuditArchive is Ownable, ERC721 {
         _safeMint(_address, tokenID, '');
         _setTokenURI(tokenID, _metaData);
 
-        // Inform everyone and use a user friendly message
-        emit MintedToken(_address, tokenID, now, "Token has been minted");
+        emit MintedToken(_address, tokenID, now);
 
         // Increment the token ID for
         tokenID = tokenID.add(1);
     }
 
     function _transfer(address from, address to, uint256 tokenId) internal virtual override {
-        // Inform everyone and use a user friendly message
         emit TransferAttempted(from, to, tokenId, now, "The NFT is a non-fungible, non-transferable token");
     }
 }

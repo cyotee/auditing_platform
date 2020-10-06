@@ -17,14 +17,12 @@ contract Auditable is Ownable {
     string public contractCreationTxHash;
 
     // if this is internal (not used outside this contract) then this modifier does not need to exist
-    // also it's just a require statement
 /*    modifier txHashMatches(string memory _txHash) {
         require(_txHash == contractCreationTxHash, "tx hashes do not match");
         _;
     }*/
 
     // if this is internal (not used outside this contract) then this modifier does not need to exist
-    // also it's just a require statement
     modifier txHashSet() {
         require(!contractCreationTxHashSet, "tx has been set");
         _;
@@ -35,17 +33,17 @@ contract Auditable is Ownable {
         _;
     }
 
-    event ApprovedAudit(address _auditor, address _contract, uint256 _time, string _message);
-    event OpposedAudit(address _auditor, address _contract, uint256 _time, string _message);
-    event SetAuditor(address _previousAuditor, address _newAuditor, address _contract, uint256 _time, string _message);
-    event SetPlatform(address _previousPlatform, address _newPlatform, address _contract, uint256 _time, string _message);
-    event TxHashSet(string _txHash, uint256 _time, string _message);
-    event SetMetaData(string _metaData);
+    event ApprovedAudit(address _auditor, address _contract, uint256 _time);
+    event OpposedAudit(address _auditor, address _contract, uint256 _time);
+    event SetAuditor(address _previousAuditor, address _newAuditor, address _contract, uint256 _time);
+    event SetPlatform(address _previousPlatform, address _newPlatform, address _contract, uint256 _time);
+    event TxHashSet(string _txHash, uint256 _time);
+    event SetMetaData(string _metaData, uint256 _time);
 
     constructor(address _auditor,  address _platform) Ownable() public {
         setAuditor(_auditor);
         setPlatform(_platform);
-        auditedContract = address(this);
+        auditedContract = address(this);    // this won't work, you're referencing the auditable contract itself
     }
 
     function setContractCreationTxHash(string memory _txHash) public onlyOwner() {
@@ -55,7 +53,7 @@ contract Auditable is Ownable {
         contractCreationTxHashSet = true;
 
         // Inform everyone and use a user friendly message
-        emit TxHashSet(contractCreationTxHash, now, "Contract hash has been set");
+        emit TxHashSet(contractCreationTxHash, now);
     }
 
     function setAuditor(address _auditor) public {
@@ -66,7 +64,7 @@ contract Auditable is Ownable {
         auditor = _auditor;
 
         // Inform everyone and use a user friendly message
-        emit SetAuditor(previousAuditor, auditor, auditedContract, now, "Auditor has been set");
+        emit SetAuditor(previousAuditor, auditor, auditedContract, now);
     }
 
     function setPlatform(address _platform) public {
@@ -77,7 +75,7 @@ contract Auditable is Ownable {
         platform = _platform;
 
         // Inform everyone and use a user friendly message
-        emit SetPlatform(previousPlatform, platform, auditedContract, now, "Platform has been set");
+        emit SetPlatform(previousPlatform, platform, auditedContract, now);
     }
 
     // The auditor is approving the contract by switching the audit bool to true.
@@ -103,15 +101,12 @@ contract Auditable is Ownable {
                 '"auditorOfContract" : ', '"', _auditor,
                 ' }'));
 
-        emit SetMetaData(_metaData);
 
         // Delegateall complete audit function from platform
         platform.delegatecall(abi.encodeWithSignature("completeAudit(string, address, bool)", _metaData, auditedContract, true));
 
-        // Inform everyone and use a user friendly message
-        emit ApprovedAudit(auditor, auditedContract, now, "Contract approved, functionality unlocked");
-
-
+        emit SetMetaData(_metaData, now);
+        emit ApprovedAudit(auditor, auditedContract, now);
     }
 
     // The auditor is opposing the audit by switching the bool to false
@@ -138,13 +133,11 @@ contract Auditable is Ownable {
                 '"auditorOfContract" : ', '"', _auditor,
                 ' }'));
 
-        emit SetMetaData(_metaData);
-
         // Delegateall complete audit function from platform
         platform.delegatecall(abi.encodeWithSignature("completeAudit(string, address, bool)", _metaData, auditedContract, false));
 
-        // Inform everyone and use a user friendly message
-        emit OpposedAudit(auditor, auditedContract, now, "Contract has failed the audit");
+        emit SetMetaData(_metaData, now);
+        emit OpposedAudit(auditor, auditedContract, now);
     }
 }
 

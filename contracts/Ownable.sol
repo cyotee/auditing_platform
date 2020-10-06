@@ -9,7 +9,7 @@ contract Ownable {
 
     address payable public owner;
 
-    event TransferredOwnership(address _previous, address _next, uint256 _time, string _message);
+    event OwnershipTransferred(address _previous, address _next, uint256 _time);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Owner only");
@@ -24,7 +24,6 @@ contract Ownable {
         address previousOwner = owner;
         owner = _owner;
 
-        // Inform everyone and use a user friendly message
-        emit TransferredOwnership(previousOwner, owner, now, "Ownership has been transferred");
+        emit OwnershipTransferred(previousOwner, owner, now);
     }
 }
