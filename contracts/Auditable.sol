@@ -10,23 +10,11 @@ contract Auditable is Ownable {
     // Indicates whether the audit has been completed and approved (true) or not (false)
     bool public audited;
 
-    // Write a comment here telling me what this is
+    // probably remove
     bool public contractCreationTxHashSet;
 
-    // Write a comment here telling me what this is
-    string public contractCreationTxHash;
-
-    // if this is internal (not used outside this contract) then this modifier does not need to exist
-/*    modifier txHashMatches(string memory _txHash) {
-        require(_txHash == contractCreationTxHash, "tx hashes do not match");
-        _;
-    }*/
-
-    // if this is internal (not used outside this contract) then this modifier does not need to exist
-    modifier txHashSet() {
-        require(!contractCreationTxHashSet, "tx has been set");
-        _;
-    }
+    // check how to check an empty string
+    string public contractCreationHash;
 
     modifier isAudited() {
         require(audited, "Not audited");
@@ -43,17 +31,16 @@ contract Auditable is Ownable {
     constructor(address _auditor,  address _platform) Ownable() public {
         setAuditor(_auditor);
         setPlatform(_platform);
-        auditedContract = address(this);    // this won't work, you're referencing the auditable contract itself
+        auditedContract = address(this);
     }
 
     function setContractCreationTxHash(string memory _txHash) public onlyOwner() {
         require(!contractCreationTxHashSet, "tx has been set");
 
-        contractCreationTxHash = _txHash;
-        contractCreationTxHashSet = true;
+        contractCreationHash = _txHash;
+        // contractCreationTxHashSet = true;
 
-        // Inform everyone and use a user friendly message
-        emit TxHashSet(contractCreationTxHash, now);
+        emit TxHashSet(contractCreationHash, now);
     }
 
     function setAuditor(address _auditor) public {
@@ -63,7 +50,6 @@ contract Auditable is Ownable {
         address previousAuditor = auditor;
         auditor = _auditor;
 
-        // Inform everyone and use a user friendly message
         emit SetAuditor(previousAuditor, auditor, auditedContract, now);
     }
 
@@ -74,19 +60,20 @@ contract Auditable is Ownable {
         address previousPlatform = platform;
         platform = _platform;
 
-        // Inform everyone and use a user friendly message
         emit SetPlatform(previousPlatform, platform, auditedContract, now);
     }
 
     // The auditor is approving the contract by switching the audit bool to true.
-    function approveAudit(string calldata _contractAddress, string calldata _txHash, string calldata _auditor) public {
+    function approveAudit(string memory _txHash) public {
         require(msg.sender == auditor, "Auditor only");
-        require(keccak256(abi.encodePacked(_txHash)) == keccak256(abi.encodePacked(contractCreationTxHash)), "tx hashes do not match");
+        require(keccak256(abi.encodePacked(_txHash)) == keccak256(abi.encodePacked(contractCreationHash)), "tx hashes do not match");
         require(!audited, "Contract has already been approved");
 
         audited = true;
 
         string memory _metaData;
+        string memory _auditor = addressToString(msg.sender);
+        string memory _address = addressToString(auditedContract);
 
         _metaData =  string(abi.encodePacked(
                 '{ "',
@@ -96,7 +83,7 @@ contract Auditable is Ownable {
                 '"inSystem" : ', 'true, ',
                 '"isAudited" : ', 'true, ',
                 '"passedAudit" : ', 'true, ',
-                '"contractAddress" : ', '"', _contractAddress, '", ',
+                '"contractAddress" : ', '"', _address, '", ',
                 '"contractDeploymentTxHash" : ', '"', _txHash, '", ',
                 '"auditorOfContract" : ', '"', _auditor,
                 ' }'));
@@ -110,15 +97,17 @@ contract Auditable is Ownable {
     }
 
     // The auditor is opposing the audit by switching the bool to false
-    function opposeAudit(string calldata _contractAddress, string calldata _txHash, string calldata _auditor) public {
+    function opposeAudit(string memory _txHash) public {
         require(msg.sender == auditor, "Auditor only");
-        require(keccak256(abi.encodePacked(_txHash)) == keccak256(abi.encodePacked(contractCreationTxHash)), "tx hashes do not match");
+        require(keccak256(abi.encodePacked(_txHash)) == keccak256(abi.encodePacked(contractCreationHash)), "tx hashes do not match");
         require(!audited, "Cannot destroy an approved contract");
 
         // The default (unset) bool is set to false but do not rely on that; set to false to be sure.
         audited = false;
 
         string memory _metaData;
+        string memory _auditor = addressToString(msg.sender);
+        string memory _address = addressToString(auditedContract);
 
         _metaData =  string(abi.encodePacked(
                 '{ "',
@@ -128,7 +117,7 @@ contract Auditable is Ownable {
                 '"inSystem" : ', '"true", ',
                 '"isAudited" : ', '"true", ',
                 '"passedAudit" : ', '"false", ',
-                '"contractAddress" : ', '"', _contractAddress, '", ',
+                '"contractAddress" : ', '"', _address, '", ',
                 '"contractDeploymentTxHash" : ', '"', _txHash, '", ',
                 '"auditorOfContract" : ', '"', _auditor,
                 ' }'));
@@ -138,6 +127,24 @@ contract Auditable is Ownable {
 
         emit SetMetaData(_metaData, now);
         emit OpposedAudit(auditor, auditedContract, now);
+    }
+
+    function addressToString(address _address) private pure returns(string memory) {
+        // I do not trust this. It seems to match character by character each time
+        // however the capitilization is different at times and I do not know why...
+        bytes32 _bytes = bytes32(uint256(_address));
+        bytes memory HEX = "0123456789abcdef";
+        bytes memory _string = new bytes(42);
+        
+        _string[0] = '0';
+        _string[1] = 'x';
+        
+        for(uint i = 0; i < 20; i++) {
+            _string[2+i*2] = HEX[uint8(_bytes[i + 12] >> 4)];
+            _string[3+i*2] = HEX[uint8(_bytes[i + 12] & 0x0f)];
+        }
+        
+        return string(_string);
     }
 }
 

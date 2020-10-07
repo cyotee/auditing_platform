@@ -30,7 +30,7 @@ contract AuditablePlatform is Ownable {
         
         isAuditor[_auditor] = true;
 
-        emit AddAuditor(owner, _auditor, now);
+        emit AddedAuditor(owner, _auditor, now);
     }
 
     function removeAuditor(address _auditor) public onlyOwner() {
@@ -38,6 +38,6 @@ contract AuditablePlatform is Ownable {
         
         isAuditor[_auditor] = false;
 
-        emit RemoveAuditor(owner, _auditor, now);
+        emit RemovedAuditor(owner, _auditor, now);
     }
 }
