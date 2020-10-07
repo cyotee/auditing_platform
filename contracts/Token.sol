@@ -4,10 +4,14 @@ pragma solidity ^0.6.10;
 contract Token {
 
     string public metaData;
+    uint256 public gasBefore;
+    uint256 public gasAfter;
 
     constructor() public {
 
+        gasBefore = gasleft();
         string memory addre = addressToString(msg.sender);
+        gasAfter = gasleft();
         
         metaData =  string(abi.encodePacked(
                 '{ "',
@@ -30,5 +34,5 @@ contract Token {
         }
         
         return string(_string);
-}
+    }
 }

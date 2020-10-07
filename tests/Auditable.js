@@ -28,6 +28,10 @@ contract("Auditable", async (accounts) => {
     it("aaa", async () => {
         console.log("Sender:        " + owner);
         console.log("\n metadata:     " + await token.metaData());
+
+        const before = await token.gasBefore();
+        const after = await token.gasAfter();
+        console.log("Gas used: " + (before - after));
     });
 
 })
