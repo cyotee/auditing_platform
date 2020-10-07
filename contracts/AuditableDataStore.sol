@@ -1,98 +1,105 @@
+/*
 pragma solidity ^0.6.10;
 import "./Ownable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 
-// When Datastore us deployed, Auditable contract will
+// When Datastore is deployed, Auditable contract will
 // use this contract address to call functions that will update
 contract AuditableDataStore is Ownable {
-    using SafeMath for uint;
 
-    // Struct that keeps track of details of auditors
-    struct AuditorDetails {
-        bool isAuditor;
-        address auditorAddress;
-        address[] contractsApproved;
-        address[] contractsOpposed;
-        uint totalContractsAudited;
-    }
-
-    // Struct that keeps track of contract details
-    struct AuditedContractDetails {
-        bool inSystem;
-        bool isAudited;
-        bool passedAudit;
-        address contractAddress;
-        address auditorOfContract;
-    }
-
-    mapping(address => address[]) approvedAudits;
-    mapping(address => address[]) opposedAudits;
-    mapping(address => AuditorDetails) auditorDetails;
-    mapping(address => AuditedContractDetails) auditedContractDetails;
     address[] public auditors;
 
-    constructor(address _auditablePlatform) Ownable() public {
-        transferOwnership(_auditablePlatform);
+    struct AuditorDetails {
+        address auditor;
+        address[] contractsApproved;
+        address[] contractsOpposed;
+        uint256 totalAudits;
+        bool isAuditor;
     }
 
-    // Function that will allow the owner to set an auditor
-    function addAuditor(address _newAuditor) public onlyOwner() {
-        require(auditorDetails[_newAuditor].isAuditor == false, "Address is already an auditor");
-
-        auditors.push(_auditorAddress);
-        auditorDetails[_auditorAddress].isAuditor = true;
-        auditorDetails[_auditorAddress].auditorAddress = _newAuditor;
+    struct ContractDetails {
+        address auditor;
+        address contractAddress;
+        bool inSystem;  // why and what is this?
+        bool isAudited;
+        bool passedAudit;
     }
 
-    // Function that will allow auditor to oppose a contract
-    function auditOpposed(address _contractAddress, address _auditorAddress) private {
-        require(auditorDetails[_auditorAddress].isAuditor == true, "Not an auditor");
-        require(auditedContractDetails[_contractAddress].isAudited == false, "Contract already audited");
+    mapping(address => address[]) approvedAudits;   // this does not need to exist
+    mapping(address => address[]) opposedAudits;    // this does not need to exist
+    mapping(address => AuditorDetails) auditorDetails;
+    mapping(address => ContractDetails) contractDetails;
+    
+    constructor(address _platform) Ownable() public {
+        transferOwnership(_platform);
+    }
+
+    function addAuditor(address _auditor) public onlyOwner() {
+        require(!auditorDetails[_auditor].isAuditor, "Address is already an auditor");
+
+        auditorDetails[_auditor].isAuditor = true;
+        auditorDetails[_auditor].auditor = _auditor;
+
+        // need an event
+    }
+
+    function auditOpposed(address _contract, address _auditor) private {    // private?
+        require(auditorDetails[_auditor].isAuditor, "Not an auditor");
+        require(!contractDetails[_contract].isAudited, "Contract already audited");
 
         // Update details for auditor
-        opposedAudits[_contractAddress].push(_contractAddress);
-        auditorDetails[_auditorAddress].contractsOpposed.push(_contractAddress);
-        auditorDetails[_auditorAddress].totalContractsAudited = auditorDetails[_auditorAddress].totalContractsAudited.add(1);
+        opposedAudits[_contract].push(_contract);
+        auditorDetails[_auditor].contractsOpposed.push(_contract);
+        auditorDetails[_auditor].totalAudits = auditorDetails[_auditor].totalAudits.add(1);
 
         // Update details for contract
-        auditedContractDetails[_contractAddress].inSystem = true;
-        auditedContractDetails[_contractAddress].isAudited = true;
-        auditedContractDetails[_contractAddress].passedAudit = false;
-        auditedContractDetails[_contractAddress].contractAddress = _contractAddress;
-        auditedContractDetails[_contractAddress].auditorOfContract = _auditorAddress;
+        contractDetails[_contract].inSystem = true;
+        contractDetails[_contract].isAudited = true;
+        contractDetails[_contract].passedAudit = false;
+        contractDetails[_contract].contractAddress = _contract;
+        contractDetails[_contract].auditor = _auditor;
+
+        // need an event
     }
 
-    // Function that will allow auditor to approve a contract
-    function auditApproved(address _contractAddress, address _auditorAddress) private {
-        require(auditorDetails[_auditorAddress].isAuditor == true, "Not an auditor");
-        require(auditedContractDetails[_contractAddress].isAudited == false, "Contract already audited");
+    function auditApproved(address _contract, address _auditor) private {   // private?
+        require(auditorDetails[_auditor].isAuditor, "Not an auditor");
+        require(!contractDetails[_contract].isAudited, "Contract already audited");
+
+        approvedAudits[_contract].push(_contract);
 
         // Update details for auditor
-        approvedAudits[_contractAddress].push(_contractAddress);
-        auditorDetails[_auditorAddress].contractsApproved.push(_contractAddress);
-        auditorDetails[_auditorAddress].totalContractsAudited = auditorDetails[_auditorAddress].totalContractsAudited.add(1);
+        auditorDetails[_auditor].contractsApproved.push(_contract);
+        auditorDetails[_auditor].totalAudits = auditorDetails[_auditor].totalAudits.add(1);
 
         // Update details for contract
-        auditedContractDetails[_contractAddress].inSystem = true;
-        auditedContractDetails[_contractAddress].isAudited = true;
-        auditedContractDetails[_contractAddress].passedAudit = true;
-        auditedContractDetails[_contractAddress].contractAddress = _contractAddress;
-        auditedContractDetails[_contractAddress].auditorOfContract = _auditorAddress;
+        contractDetails[_contract].inSystem = true;
+        contractDetails[_contract].isAudited = true;
+        contractDetails[_contract].passedAudit = true;
+        contractDetails[_contract].contractAddress = _contract;
+        contractDetails[_contract].auditor = _auditor;
+
+        // need an event
     }
 
-    // Get details of a specific
-    function getDetailsOfContract(address _contractAddress) public view returns (address _auditor, bool _isAudited, bool _passedAudit) {
-        require(auditedContractDetails[_contractAddress].inSystem == true, "Contract not in datastore");
-        return (auditedContractDetails[_contractAddress].auditorOfContract, auditedContractDetails[_contractAddress].isAudited, auditedContractDetails[_contractAddress].passedAudit);
+    function contractDetails(address _contract) public view returns (address _auditor, bool _isAudited, bool ) {
+        require(contractDetails[_contract].inSystem, "Contract not in datastore");
+        
+        return 
+        (
+            contractDetails[_contract].auditor, 
+            contractDetails[_contract].isAudited, 
+            contractDetails[_contract].passedAudit
+        );
     }
 
-    // Get details of a specific auditor
-    function getAuditorDetails(address _auditor) public view returns (address[] _contractsApproved, address[] _contractsOpposed, uint totalContractsAudited) {
-        require(auditorDetails[_auditor].isAuditor == true, "Address not an auditor");
-        return(auditorDetails[_auditor].contractsApproved, auditorDetails[_auditor].contractsOpposed, auditorDetails[_auditor].totalContractsAudited);
+    function auditorDetails(address _auditor) public view returns (address[] calldata _contractsApproved, address[] calldata _contractsOpposed, uint256 _totalAudits) {
+        require(auditorDetails[_auditor].isAuditor, "Address not an auditor");
 
+        return 
+        (
+            auditorDetails[_auditor].contractsApproved, 
+            auditorDetails[_auditor].contractsOpposed, 
+            auditorDetails[_auditor].totalAudits
+        );
     }
-
-
-
-}
+}*/
