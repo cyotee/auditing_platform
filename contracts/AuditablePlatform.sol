@@ -9,20 +9,18 @@ contract AuditablePlatform is Ownable {
 
     event AddedAuditor(address _owner, address _auditor, uint256 _time);
     event RemovedAuditor(address _owner, address _auditor, uint256 _time);
-    event CompletedAudit(address _auditor, address _contractAddress, bool _auditPassed, string _metaData, uint256 _time);
+    event CompletedAudit(address _auditor, address _contract, bool _auditPassed, string _metaData, uint256 _time);
 
     constructor(address _archivedNFT) Ownable() public {
         archivedNFT = _archivedNFT;
     }
 
-    function completeAudit(address _contractAddress, string memory _metaData, bool _auditPassed) public returns (bool) {
+    function completeAudit(address _contract, bool _auditPassed, bytes calldata _metaData) external {
         require(isAuditor[msg.sender], "Not an auditor");
 
-        archivedNFT.call(abi.encodeWithSignature("mint(address, string)", msg.sender, _metaData));
+        archivedNFT.call(abi.encodeWithSignature("mint(address, bytes)", msg.sender, _metaData));
 
-        emit CompletedAudit(msg.sender, _contractAddress, _auditPassed, _metaData, now);
-
-        return _auditPassed;    // why is this needed / where is this used?
+        emit CompletedAudit(msg.sender, _contract, _auditPassed, string(_metaData), now);
     }
 
     function addAuditor(address _auditor) public onlyOwner() {
@@ -30,7 +28,7 @@ contract AuditablePlatform is Ownable {
         
         isAuditor[_auditor] = true;
 
-        emit AddedAuditor(owner, _auditor, now);
+        emit AddedAuditor(msg.sender, _auditor, now);
     }
 
     function removeAuditor(address _auditor) public onlyOwner() {
@@ -38,6 +36,6 @@ contract AuditablePlatform is Ownable {
         
         isAuditor[_auditor] = false;
 
-        emit RemovedAuditor(owner, _auditor, now);
+        emit RemovedAuditor(msg.sender, _auditor, now);
     }
 }

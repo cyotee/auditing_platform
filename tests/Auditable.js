@@ -1,13 +1,15 @@
 const Auditable = artifacts.require("Auditable");
 const Token = artifacts.require("Token");
+const Token2 = artifacts.require("Token2");
 const truffleAssert = require("truffle-assertions");
 
 contract("Auditable", async (accounts) => {
 
     let owner;
-    let auditable;
+    // let auditable;
     let platform;
     let token;
+    let token2;
 
     before(() => {
         owner = accounts[0];
@@ -16,8 +18,9 @@ contract("Auditable", async (accounts) => {
     });
 
     beforeEach(async () => {
-        auditable = await Auditable.new(_auditor = auditor, _platform = platform, {from: owner});
-        token = await Token.new({from: owner});
+        // auditable = await Auditable.new(_auditor = auditor, _platform = platform, {from: owner});
+        token2 = await Token2.new({from: owner});
+        token = await Token.new(token = token2.address, {from: owner});
     });
 
     // it("Sets the platform", () => {
@@ -26,12 +29,20 @@ contract("Auditable", async (accounts) => {
     // });
 
     it("aaa", async () => {
-        console.log("Sender:        " + owner);
-        console.log("\n metadata:     " + await token.metaData());
+        await token.makeBytesCall();
+        await token.makeStringCall();
 
-        const before = await token.gasBefore();
-        const after = await token.gasAfter();
-        console.log("Gas used: " + (before - after));
+        const beforeB = await token.bgB();
+        const afterB = await token.bgA();
+
+        const beforeS = await token.sgB();
+        const afterS = await token.sgA();
+
+        const btotal = beforeB - afterB;
+        const stotal = beforeS - afterS;
+        console.log("Bytes Gas used: " + btotal);
+        console.log("String Gas used: " + stotal);
+        console.log("Strings are more expensive by: " + (stotal - btotal));
     });
 
 })

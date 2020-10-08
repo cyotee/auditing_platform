@@ -10,10 +10,7 @@ contract Auditable is Ownable {
     // Indicates whether the audit has been completed and approved (true) or not (false)
     bool public audited;
 
-    // probably remove
-    bool public contractCreationTxHashSet;
-
-    // check how to check an empty string
+    // A deployed contract has a creation hash, store it so that you can access the code post self destruct
     string public contractCreationHash;
 
     modifier isAudited() {
@@ -21,24 +18,22 @@ contract Auditable is Ownable {
         _;
     }
 
-    event ApprovedAudit(address _auditor, address _contract, uint256 _time);
-    event OpposedAudit(address _auditor, address _contract, uint256 _time);
     event SetAuditor(address _previousAuditor, address _newAuditor, address _contract, uint256 _time);
     event SetPlatform(address _previousPlatform, address _newPlatform, address _contract, uint256 _time);
+    event ApprovedAudit(address _auditor, address _contract, uint256 _time);
+    event OpposedAudit(address _auditor, address _contract, uint256 _time);
     event TxHashSet(string _txHash, uint256 _time);
-    event SetMetaData(string _metaData, uint256 _time);
 
-    constructor(address _auditor,  address _platform) Ownable() public {
+    constructor(address _auditor, address _platform) Ownable() public {
         setAuditor(_auditor);
         setPlatform(_platform);
         auditedContract = address(this);
     }
 
-    function setContractCreationTxHash(string memory _txHash) public onlyOwner() {
-        require(!contractCreationTxHashSet, "tx has been set");
+    function setContractCreationHash(string memory _txHash) public onlyOwner() {
+        require(bytes(contractCreationHash).length == 0, "tx has been set");
 
         contractCreationHash = _txHash;
-        // contractCreationTxHashSet = true;
 
         emit TxHashSet(contractCreationHash, now);
     }
@@ -71,11 +66,13 @@ contract Auditable is Ownable {
 
         audited = true;
 
-        string memory _metaData;
+        bytes memory _metaData;
+
+        // Address types must be converted manually otherwise conversions will not be in human readable form later
         string memory _auditor = addressToString(msg.sender);
         string memory _address = addressToString(auditedContract);
 
-        _metaData =  string(abi.encodePacked(
+        _metaData =  abi.encodePacked(
                 '{ "',
                 'name" : ' , '"The Church of the Chain Incorporated Audit Archive NFT", ',
                 '"description" : ', '"A record of the audit for this contract provided free to devs from The Church of the Chain Incorporated", ',
@@ -83,17 +80,15 @@ contract Auditable is Ownable {
                 '"inSystem" : ', 'true, ',
                 '"isAudited" : ', 'true, ',
                 '"passedAudit" : ', 'true, ',
-                '"contractAddress" : ', '"', _address, '", ',
-                '"contractDeploymentTxHash" : ', '"', _txHash, '", ',
-                '"auditorOfContract" : ', '"', _auditor,
-                ' }'));
+                '"contract" : ', '"', _address, '", ',
+                '"deploymentHash" : ', '"', _txHash, '", ',
+                '"auditor" : ', '"', _auditor,
+                ' }');
 
+        // Delegate the call via the platform to complete the audito
+        platform.delegatecall(abi.encodeWithSignature("completeAudit(address, bool, bytes)", auditedContract, true, _metaData));
 
-        // Delegateall complete audit function from platform
-        platform.delegatecall(abi.encodeWithSignature("completeAudit(string, address, bool)", _metaData, auditedContract, true));
-
-        emit SetMetaData(_metaData, now);
-        emit ApprovedAudit(auditor, auditedContract, now);
+        emit ApprovedAudit(msg.sender, auditedContract, now);
     }
 
     // The auditor is opposing the audit by switching the bool to false
@@ -105,11 +100,13 @@ contract Auditable is Ownable {
         // The default (unset) bool is set to false but do not rely on that; set to false to be sure.
         audited = false;
 
-        string memory _metaData;
+        bytes memory _metaData;
+
+        // Address types must be converted manually otherwise conversions will not be in human readable form later
         string memory _auditor = addressToString(msg.sender);
         string memory _address = addressToString(auditedContract);
 
-        _metaData =  string(abi.encodePacked(
+        _metaData =  abi.encodePacked(
                 '{ "',
                 'name" : ' , '"The Church of the Chain Incorporated Audit Archive NFT", ',
                 '"description" : ', '"A record of the audit for this contract provided free to devs from The Church of the Chain Incorporated", ',
@@ -117,34 +114,31 @@ contract Auditable is Ownable {
                 '"inSystem" : ', '"true", ',
                 '"isAudited" : ', '"true", ',
                 '"passedAudit" : ', '"false", ',
-                '"contractAddress" : ', '"', _address, '", ',
-                '"contractDeploymentTxHash" : ', '"', _txHash, '", ',
-                '"auditorOfContract" : ', '"', _auditor,
-                ' }'));
+                '"contract" : ', '"', _address, '", ',
+                '"deploymentHash" : ', '"', _txHash, '", ',
+                '"auditor" : ', '"', _auditor,
+                ' }');
 
-        // Delegateall complete audit function from platform
-        platform.delegatecall(abi.encodeWithSignature("completeAudit(string, address, bool)", _metaData, auditedContract, false));
+        // Delegate the call via the platform to complete the audito
+        platform.delegatecall(abi.encodeWithSignature("completeAudit(address, bool, bytes)", auditedContract, false, _metaData));
 
-        emit SetMetaData(_metaData, now);
-        emit OpposedAudit(auditor, auditedContract, now);
+        emit OpposedAudit(msg.sender, auditedContract, now);
     }
 
     function addressToString(address _address) private pure returns(string memory) {
-        // I do not trust this. It seems to match character by character each time
-        // however the capitilization is different at times and I do not know why...
         bytes32 _bytes = bytes32(uint256(_address));
         bytes memory HEX = "0123456789abcdef";
-        bytes memory _string = new bytes(42);
+        bytes memory _addr = new bytes(42);
         
-        _string[0] = '0';
-        _string[1] = 'x';
+        _addr[0] = '0';
+        _addr[1] = 'x';
         
-        for(uint i = 0; i < 20; i++) {
-            _string[2+i*2] = HEX[uint8(_bytes[i + 12] >> 4)];
-            _string[3+i*2] = HEX[uint8(_bytes[i + 12] & 0x0f)];
+        for(uint256 i = 0; i < 20; i++) {
+            _addr[2+i*2] = HEX[uint8(_bytes[i + 12] >> 4)];
+            _addr[3+i*2] = HEX[uint8(_bytes[i + 12] & 0x0f)];
         }
         
-        return string(_string);
+        return string(_addr);
     }
 }
 
