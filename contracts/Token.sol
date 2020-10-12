@@ -1,36 +1,56 @@
 pragma solidity ^0.6.10;
 
-// used for testing, do not use in prod, this should be deleted
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract Token {
+contract Token is Ownable, ERC721 {
 
-    string public metaData;
-    bytes public metaBytes;
+    using SafeMath for uint256;
 
-    address public token2;
+    // Used to issue unique tokens
+    uint256 public tokenID;
 
-    // bytes gas before/after
-    uint256 public bgB;
-    uint256 public bgA;
+    event MintedToken(address _recipient, uint256 _tokenId);
+    event TransferAttempted(address _from, address _to, uint256 _tokenId, string _message);
 
-    // string gas before/after
-    uint256 public sgB;
-    uint256 public sgA;
+    constructor() Ownable() ERC721("Word", "WORD") public {}
 
-    constructor(address token) public {
-        token2 = token;
+    function mint(address _auditorAddr, address _contract, bool _passed, bytes calldata _txHash) external onlyOwner() {
 
-        string memory addre = addressToString(msg.sender);
-        
-        metaData =  string(abi.encodePacked(
-                '{ "',
-                '"auditorOfContract" : ', '"', addre,
-                ' }'));
-        
-        metaBytes =  abi.encodePacked(
-                '{ "',
-                '"auditorOfContract" : ', '"', addre,
-                ' }');
+        // Address types must be converted manually otherwise conversions will not be in human readable form later
+        string memory _auditor = addressToString(_auditorAddr);
+        string memory _address = addressToString(_contract);
+        string memory _metaData;
+
+        string memory passed = _passed ? 'true' : 'false';
+
+        _metaData =  string(abi.encodePacked(
+            '{',
+            '"name": ' , '"The Church of the Chain Incorporated Audit Archive NFT",',
+            '"description": ', '"A record of the audit for this contract provided to auditors from The Church of the Chain Incorporated",',
+            '"image": ', '"https://ipfs.io/ipfs/QmSZUL7Ea21osUUUESX6nPuUSSTF6RniyoJGBaa2ZY7Vjd",',
+            '"auditor": ', '"', _auditor, '",',
+            '"contract": ', '"', _address, '",',
+            '"passedAudit": ', passed, ',',
+            '"deploymentHash": ', '"', string(_txHash), '",',
+            '}'
+            ));
+
+        // Mint token and send to the _recipient
+        _safeMint(_auditorAddr, tokenID);
+        _setTokenURI(tokenID, _metaData);
+
+        uint256 ID = tokenID;
+
+        // Increment the token ID for the next mint
+        tokenID = tokenID.add(1);
+
+        emit MintedToken(_auditorAddr, ID);
+    }
+
+    function _transfer(address from, address to, uint256 tokenId) internal virtual override {
+        emit TransferAttempted(from, to, tokenId, "The NFT is a non-fungible, non-transferable token");
     }
 
     function addressToString(address _address) private pure returns(string memory) {
@@ -48,22 +68,4 @@ contract Token {
         
         return string(_addr);
     }
-
-    function makeBytesCall() payable public {
-        require(metaBytes.length != 0, "Empty meta data");
-
-        bgB = gasleft();
-        token2.delegatecall(abi.encodeWithSignature("receiveBytesCall(bytes)", metaBytes));
-        bgA = gasleft();
-    }
-
-    function makeStringCall() payable public {
-
-        sgB = gasleft();
-        token2.delegatecall(abi.encodeWithSignature("receiveStringCall(string)", metaData));
-        sgA = gasleft();
-    }
 }
-
-
-

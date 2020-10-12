@@ -1,41 +1,52 @@
 pragma solidity ^0.6.10;
-import "./Ownable.sol";
+
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AuditablePlatform is Ownable {
 
-    address public archivedNFT;
+    address public NFT;
+    address public dataStore;
 
     mapping(address => bool) isAuditor;
 
-    event AddedAuditor(address _owner, address _auditor, uint256 _time);
-    event RemovedAuditor(address _owner, address _auditor, uint256 _time);
-    event CompletedAudit(address _auditor, address _contract, bool _auditPassed, string _metaData, uint256 _time);
+    event AddedAuditor(address indexed _owner, address indexed _auditor);
+    event RemovedAuditor(address indexed _owner, address indexed _auditor);
+    event CompletedAudit(address indexed _auditor, address indexed _contract, bool _auditPassed, string indexed _txHash);
+    event ChangedDataStore(address indexed _owner, address _dataStore);
 
-    constructor(address _archivedNFT) Ownable() public {
-        archivedNFT = _archivedNFT;
+    constructor(address _NFT, address _dataStore) Ownable() public {
+        NFT = _NFT;
+        dataStore = _dataStore;
     }
 
-    function completeAudit(address _contract, bool _auditPassed, bytes calldata _metaData) external {
-        require(isAuditor[msg.sender], "Not an auditor");
+    function completeAudit(address _contract, bool _auditPassed, bytes calldata _txHash) external {
 
-        archivedNFT.call(abi.encodeWithSignature("mint(address, bytes)", msg.sender, _metaData));
+        // Tell the data store that an audit has been completed
+        dataStore.call(abi.encodeWithSignature("completeAudit(address, bool, bytes)", _msgSender(), _auditPassed, _txHash));
 
-        emit CompletedAudit(msg.sender, _contract, _auditPassed, string(_metaData), now);
+        // Mint a non-fungible token for the auditor as a receipt
+        NFT.call(abi.encodeWithSignature("mint(address, address, bool, bytes)", _msgSender(), _contract, _auditPassed, _txHash));
+
+        emit CompletedAudit(_msgSender(), _contract, _auditPassed, string(_txHash));
     }
 
     function addAuditor(address _auditor) public onlyOwner() {
-        require(!isAuditor[_auditor], "Already an auditor");
+        // Tell the data store to add an auditor
+        dataStore.call(abi.encodeWithSignature("addAuditor(address)", _auditor));
         
-        isAuditor[_auditor] = true;
-
-        emit AddedAuditor(msg.sender, _auditor, now);
+        emit AddedAuditor(_msgSender(), _auditor);
     }
 
-    function removeAuditor(address _auditor) public onlyOwner() {
-        require(isAuditor[_auditor], "Already removed from auditors");
+    function suspendAuditor(address _auditor) public onlyOwner() {
+        // Tell the data store to switch the value which indicates whether someone is an auditor to false
+        dataStore.call(abi.encodeWithSignature("suspendAuditor(address)", _auditor));
         
-        isAuditor[_auditor] = false;
+        emit RemovedAuditor(_msgSender(), _auditor);
+    }
 
-        emit RemovedAuditor(msg.sender, _auditor, now);
+    function changeDataStore(address _dataStore) public onlyOwner() {
+        dataStore = _dataStore;
+        
+        emit ChangedDataStore(_msgSender(), dataStore);
     }
 }

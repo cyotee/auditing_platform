@@ -1,6 +1,5 @@
-const Auditable = artifacts.require("Auditable");
-const Token = artifacts.require("Token");
-const Token2 = artifacts.require("Token2");
+// const Auditable = artifacts.require("Auditable");
+const Test = artifacts.require("Test");
 const truffleAssert = require("truffle-assertions");
 
 contract("Auditable", async (accounts) => {
@@ -8,8 +7,7 @@ contract("Auditable", async (accounts) => {
     let owner;
     // let auditable;
     let platform;
-    let token;
-    let token2;
+    let test;
 
     before(() => {
         owner = accounts[0];
@@ -19,8 +17,7 @@ contract("Auditable", async (accounts) => {
 
     beforeEach(async () => {
         // auditable = await Auditable.new(_auditor = auditor, _platform = platform, {from: owner});
-        token2 = await Token2.new({from: owner});
-        token = await Token.new(token = token2.address, {from: owner});
+        test = await Test.new({from: owner});
     });
 
     // it("Sets the platform", () => {
@@ -29,20 +26,30 @@ contract("Auditable", async (accounts) => {
     // });
 
     it("aaa", async () => {
-        await token.makeBytesCall();
-        await token.makeStringCall();
 
-        const beforeB = await token.bgB();
-        const afterB = await token.bgA();
+        await test.publicCost();
+        const beforeB = await test.gasBefore();
+        const afterB = await test.gasAfter();
+        const public = beforeB - afterB;
+        console.log("Public: " + public);
 
-        const beforeS = await token.sgB();
-        const afterS = await token.sgA();
+        await test.externalCost();
+        const beforeS = await test.gasBefore();
+        const afterS = await test.gasAfter();
+        const external = beforeS - afterS;
+        console.log("External: " + external);
 
-        const btotal = beforeB - afterB;
-        const stotal = beforeS - afterS;
-        console.log("Bytes Gas used: " + btotal);
-        console.log("String Gas used: " + stotal);
-        console.log("Strings are more expensive by: " + (stotal - btotal));
+        await test.externalPrivateCost();
+        const beforeX = await test.gasBefore();
+        const afterX = await test.gasAfter();
+        const c = beforeX - afterX;
+        console.log("External Priv: " + c);
+
+        await test.externalInternalCost();
+        const beforeP = await test.gasBefore();
+        const afterP = await test.gasAfter();
+        const d = beforeP - afterP;
+        console.log("External Inte: " + d);        
     });
 
 })
