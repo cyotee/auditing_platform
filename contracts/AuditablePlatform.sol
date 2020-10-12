@@ -3,34 +3,39 @@ import "./Ownable.sol";
 
 contract AuditablePlatform is Ownable {
 
-    address public auditArchiveNFT;
-    address[] public auditors;
+    address public archivedNFT;
 
     mapping(address => bool) isAuditor;
 
-    constructor(address _auditArchiveNFT) Ownable() public {
-        auditArchiveNFT = _auditArchiveNFT;
+    event AddedAuditor(address _owner, address _auditor, uint256 _time);
+    event RemovedAuditor(address _owner, address _auditor, uint256 _time);
+    event CompletedAudit(address _auditor, address _contract, bool _auditPassed, string _metaData, uint256 _time);
+
+    constructor(address _archivedNFT) Ownable() public {
+        archivedNFT = _archivedNFT;
     }
 
-    function completeAudit(string _metaData, bool _auditPassed) returns(bool _auditPassed){
-        require(isAuditor[msg.sender] == true, "Not an auditor");
-        auditArchiveNFT.call(abi.encodeWithSignature("mint(address, string"), msg.sender, _metaData);
-        return _auditPassed;
+    function completeAudit(address _contract, bool _auditPassed, bytes calldata _metaData) external {
+        require(isAuditor[msg.sender], "Not an auditor");
+
+        archivedNFT.call(abi.encodeWithSignature("mint(address, bytes)", msg.sender, _metaData));
+
+        emit CompletedAudit(msg.sender, _contract, _auditPassed, string(_metaData), now);
     }
 
-    function addAuditor(address _auditorToAdd) public onlyOwner() {
-        require(isAuditor[_auditorToAdd] == false, "Already an auditor");
-        isAuditor[_auditorToAdd] = true;
-        auditors.push(_auditorToAdd);
+    function addAuditor(address _auditor) public onlyOwner() {
+        require(!isAuditor[_auditor], "Already an auditor");
+        
+        isAuditor[_auditor] = true;
+
+        emit AddedAuditor(msg.sender, _auditor, now);
     }
 
-    function removeAuditor(address _auditorToRemove) public onlyOwner() {
-        require(isAuditor[_auditorToRemove] == true, "Already NOT an auditor");
-        isAuditor[_auditorToRemove] = false;
+    function removeAuditor(address _auditor) public onlyOwner() {
+        require(isAuditor[_auditor], "Already removed from auditors");
+        
+        isAuditor[_auditor] = false;
+
+        emit RemovedAuditor(msg.sender, _auditor, now);
     }
-
-
-
-
-
 }

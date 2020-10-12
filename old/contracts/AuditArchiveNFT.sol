@@ -2,29 +2,31 @@ pragma solidity ^0.6.10;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./Ownable.sol";
 
-contract AuditArchive is Ownable, ERC721 {
+contract Dawning_Chain is Ownable, ERC721 {
 
     // Used to issue unique tokens
     uint256 public tokenID;
 
-    event MintedToken(address _recipient, uint256 _tokenId, uint256 _time);
+    event MintedToken(address _donator, uint256 _tokenId, uint256 _time, string _message);
     event TransferAttempted(address _from, address _to, uint256 _tokenId, uint256 _time, string _message);
 
     constructor() Ownable() ERC721("Audit Archive NFT", "AAN") public {}
 
-    function mint(address _recipient, bytes calldata _metaData) external onlyOwner() {
+    function mint(address _address, string _metaData) public onlyOwner() {
 
         // Mint token and send to the donator
-        _safeMint(_recipient, tokenID, '');
-        _setTokenURI(tokenID, string(_metaData));
+        _safeMint(_address, tokenID, '');
+        _setTokenURI(tokenID, _metaData);
 
-        emit MintedToken(_recipient, tokenID, now);
+        // Inform everyone and use a user friendly message
+        emit MintedToken(_address, tokenID, now, "Token has been minted");
 
-        // Increment the token ID for the next mint
+        // Increment the token ID for
         tokenID = tokenID.add(1);
     }
 
     function _transfer(address from, address to, uint256 tokenId) internal virtual override {
+        // Inform everyone and use a user friendly message
         emit TransferAttempted(from, to, tokenId, now, "The NFT is a non-fungible, non-transferable token");
     }
 }
