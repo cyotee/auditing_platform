@@ -6,7 +6,7 @@ contract Dawning_Chain is Ownable, ERC721 {
 
     string public tokenDetails = '{ "name": "Donations Coin", "description": "Thank you for donating!", "image": "https://ipfs.io://ipfs/QmSZUL7Ea21osUUUESX6nPuUSSTF6RniyoJGBaa2ZY7Vjd" }';
 
-    // Used to issue unique tokens
+    // Used to issue unique token
     uint256 public tokenID;
 
     // One token per donator, keep track of donators to prevent minting more than once

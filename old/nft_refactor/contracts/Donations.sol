@@ -31,7 +31,7 @@ contract Donations is Ownable {
         {
             // Call the mint function of the current NFT contract address
             // keep in mind that you can keep donating but you will only ever have ONE
-            // NFT in total (per NFT type). This should not mint additional tokens
+            // NFT in total (per NFT type). This should not mint additional token
             NFT.call(abi.encodeWithSignature("mint(address)", msg.sender));
         }
 

@@ -1,5 +1,5 @@
 pragma solidity ^0.6.10;
-import "./Ownable.sol";
+import "./utils/access/Ownable.sol";
 
 contract Auditable is Ownable {
 
@@ -73,8 +73,8 @@ contract Auditable is Ownable {
         string memory _address = addressToString(auditedContract);
 
         _metaData =  abi.encodePacked(
-                '{ "',
-                'name" : ' , '"The Church of the Chain Incorporated Audit Archive NFT", ',
+                '{ ',
+                '"name" : ' , '"The Church of the Chain Incorporated Audit Archive NFT", ',
                 '"description" : ', '"A record of the audit for this contract provided free to devs from The Church of the Chain Incorporated", ',
                 '"image" : ', '"https://ipfs.io/ipfs/QmSZUL7Ea21osUUUESX6nPuUSSTF6RniyoJGBaa2ZY7Vjd", ',
                 '"inSystem" : ', 'true, ',
@@ -125,21 +125,21 @@ contract Auditable is Ownable {
         emit OpposedAudit(msg.sender, auditedContract, now);
     }
 
-    function addressToString(address _address) private pure returns(string memory) {
+    /*function addressToString(address _address) private pure returns(string memory) {
         bytes32 _bytes = bytes32(uint256(_address));
         bytes memory HEX = "0123456789abcdef";
         bytes memory _addr = new bytes(42);
-        
+
         _addr[0] = '0';
         _addr[1] = 'x';
-        
+
         for(uint256 i = 0; i < 20; i++) {
             _addr[2+i*2] = HEX[uint8(_bytes[i + 12] >> 4)];
             _addr[3+i*2] = HEX[uint8(_bytes[i + 12] & 0x0f)];
         }
-        
+
         return string(_addr);
-    }
+    }*/
 }
 
 

@@ -4,7 +4,7 @@ import "./Ownable.sol";
 
 contract Dawning_Chain is Ownable, ERC721 {
 
-    // Used to issue unique tokens
+    // Used to issue unique token
     uint256 public tokenID;
 
     event MintedToken(address _donator, uint256 _tokenId, uint256 _time, string _message);
