@@ -20,6 +20,7 @@ library AuditingDetails {
         AuditorDetails auditor;
         uint256 auditorDetailsIndex;
         address contractAddress;
+        string txHash;
         bool isAudited;
         bool passedAudit;
     }
