@@ -5,24 +5,26 @@ import "./utils/token/ERC721/IERC721NonTransferable.sol";
 import "./utils/token/ERC721/ERC721Holder.sol";
 import "./IAuditingPlatform.sol";
 import "./utils/math/SafeMath.sol";
+import "./utils/utils/AuditingDetails.sol";
+import "./IAuditingPlatform.sol"
 
 // When Datastore is deployed, Auditable contract will
 // use this contract address to call functions that will update
 contract AuditingDataStore is AccessControl, ERC721Holder {
 
     using SafeMath for uint256;
+    using AuditingDetails for AuditingDetails.AuditorDetails;
+    using AuditingDetails for AuditingDetails.ContractDetails;
 
     bytes32 public constant AUDITOR_ROLE = keccak256("AUDITOR_ROLE");
     bytes32 public constant PLATFORM_ADMIN_ROLE  = keccak256("PLATFORM_ADMIN_ROLE");
 
-    bytes32 public auditOrganizationName;
-
-    IAuditingPlatform auditingPlatform;
-
-    string  public platformName;
-    string public platformOrganization;
+    IAuditingPlatform public auditingPlatform;
 
     IERC721NonTransferable public auditArchiveNFT;
+
+    mapping( address => AuditingDetails.AuditorDetails) auditorDetailByAuditorAddress;
+    mapping( address => AuditingDetails.AuditorDetails) public auditorByContract;
 
     modifier onlyDefaultAdmin() {
         require( hasRole( DEFAULT_ADMIN_ROLE, _msgSender()));
@@ -33,33 +35,8 @@ contract AuditingDataStore is AccessControl, ERC721Holder {
         require( hasRole( PLATFORM_ADMIN_ROLE, _msgSender()));
         _;
     }
-
-    struct ContractDetails {
-        AuditorDetails auditor;
-        uint256 auditorDetailsIndex;
-        address contractAddress;
-        bool isAudited;
-        bool passedAudit;
-    }
-
-    struct AuditorDetails {
-        address auditor;
-        ContractDetails[] contractsApproved;
-        mapping( address => uint256 ) approvedContractIndexes;
-        ContractDetails[] contractsOpposed;
-        mapping( address => uint256)
-        uint256 totalAudits;
-    }
-
-    mapping( address => ContractDetails[]) public contractByAuditor;
-    mapping( address => AuditorDetails) public auditorByContract;
-
-    //mapping(address => address[]) approvedAudits;   // this does not need to exist
-    //mapping(address => address[]) opposedAudits;    // this does not need to exist
-    //mapping(address => AuditorDetails) auditorDetails;
-    //mapping(address => ContractDetails) contractDetails;
     
-    constructor( string _auditOrganizationName, address _auditArchiveNFT) public {
+    constructor() public {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
 
         _setupRole(PLATFORM_ADMIN_ROLE, _msgSender());
@@ -67,10 +44,18 @@ contract AuditingDataStore is AccessControl, ERC721Holder {
 
         _setupRole(AUDITOR_ROLE, _msgSender());
         _setRoleAdmin(PLATFORM_ADMIN_ROLE, PLATFORM_ADMIN_ROLE);
+    }
 
-        auditArchiveNFT = IERC721NonTransferable(_auditArchiveNFT);
+    function getAuditorRoleName() public view pure returns ( bytes32 ) {
+        return AUDITOR_ROLE;
+    }
 
-        auditOrganizationName = _auditOrganizationName;
+    function setAudtingPlatform ( address _auditingPlatform ) public onlyDefaultAdmin {
+        auditingPlatform = IAuditingPlatform(_auditingPlatform);
+    }
+
+    function setAuditArchiveNFT( IERC721NonTransferable _auditArchiveNFT ) public onlyDefaultAdmin {
+        auditArchiveNFT = _auditArchiveNFT;
     }
 
     function isPlatformAdmin( address _maybePlatformAdmin ) public view pure returns (bool) {

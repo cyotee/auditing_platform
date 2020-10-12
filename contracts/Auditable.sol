@@ -125,7 +125,7 @@ contract Auditable is Ownable {
         emit OpposedAudit(msg.sender, auditedContract, now);
     }
 
-    /*function addressToString(address _address) private pure returns(string memory) {
+    function addressToString(address _address) private pure returns(string memory) {
         bytes32 _bytes = bytes32(uint256(_address));
         bytes memory HEX = "0123456789abcdef";
         bytes memory _addr = new bytes(42);
@@ -139,7 +139,7 @@ contract Auditable is Ownable {
         }
 
         return string(_addr);
-    }*/
+    }
 }
 
 

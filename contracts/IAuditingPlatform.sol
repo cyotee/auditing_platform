@@ -4,7 +4,7 @@ import "./utils/access/AccessControl.sol";
 
 interface IAuditingPlatform is AccessControl {
 
-    function getAuditPlatformAddress() public view pure returns (address);
+    function getAuditorRoleName() public view pure returns ( bytes32 )
 
     function isAuditor(address auditorQuery) public view pure returns (bool);
 

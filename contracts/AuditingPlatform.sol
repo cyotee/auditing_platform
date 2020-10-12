@@ -2,7 +2,7 @@ pragma solidity ^0.6.10;
 
 import "./utils/access/AccessControl.sol";
 import "./IAuditingDatastore.sol";
-import "./utils/token/ERC721/IERC721NonTransferable.sol";
+import "./openzepplin/token/ERC721/IERC721NonTransferable.sol";
 
 contract AuditingPlatform is AccessControl {
 
@@ -14,14 +14,12 @@ contract AuditingPlatform is AccessControl {
     event RemovedAuditor(address _owner, address _auditor, uint256 _time);
     event CompletedAudit(address _auditor, address _contract, bool _auditPassed, string _metaData, uint256 _time);
 
-    constructor(address _datastore, address _archiveNFT) public {
-
+    constructor(address _datastore) public {
         datastore = IAuditingDatastore(_datastore);
-        archiveNFT = IERC721NonTransferable(_archiveNFT);
     }
 
-    function getAuditPlatformAddress() public view pure returns (address) {
-        return address(this);
+    function getAuditorRoleName() public view pure returns ( bytes32 ) {
+        return IAuditingDatastore.;
     }
 
     function completeAudit(address _contract, bool _auditPassed, bytes calldata _metaData) external {
