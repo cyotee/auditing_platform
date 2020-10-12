@@ -1,5 +1,6 @@
 /*
 pragma solidity ^0.6.10;
+/*
 import "./Ownable.sol";
 
 // When Datastore is deployed, Auditable contract will
