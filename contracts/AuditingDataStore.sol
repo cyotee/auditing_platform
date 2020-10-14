@@ -1,7 +1,7 @@
 pragma solidity ^0.6.10;
 
 import "./utils/access/AccessControl.sol";
-import "./utils/token/ERC721/IERC721NonTransferable.sol";
+import "./utils/token/ERC722/IERC722.sol";
 import "./utils/token/ERC721/ERC721Holder.sol";
 import "./IAuditingPlatform.sol";
 import "./utils/math/SafeMath.sol";
@@ -10,7 +10,7 @@ import "./IAuditingPlatform.sol"
 
 // When Datastore is deployed, Auditable contract will
 // use this contract address to call functions that will update
-contract AuditingDataStore is AccessControl, ERC721Holder {
+contract AuditingDataStore is AccessControl {
 
     using SafeMath for uint256;
     using AuditingDetails for AuditingDetails.AuditorDetails;
@@ -23,7 +23,7 @@ contract AuditingDataStore is AccessControl, ERC721Holder {
 
     IERC721NonTransferable public auditArchiveNFT;
 
-    mapping( address => AuditingDetails.AuditorDetails) auditorDetailByAuditorAddress;
+    mapping( address => AuditingDetails.AuditorDetails) public auditorDetailByAuditorAddress;
     mapping( address => AuditingDetails.AuditorDetails) public auditorByContract;
 
     modifier onlyDefaultAdmin() {
@@ -46,7 +46,7 @@ contract AuditingDataStore is AccessControl, ERC721Holder {
         _setRoleAdmin(PLATFORM_ADMIN_ROLE, PLATFORM_ADMIN_ROLE);
     }
 
-    function getAuditorRoleName() public view pure returns ( bytes32 ) {
+    function getAuditorRoleName() public view returns ( bytes32 ) {
         return AUDITOR_ROLE;
     }
 

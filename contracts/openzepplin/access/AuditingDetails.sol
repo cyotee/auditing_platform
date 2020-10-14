@@ -23,6 +23,14 @@ library AuditingDetails {
         string txHash;
         bool isAudited;
         bool passedAudit;
+        string ipfsitRepo;
+        string dappIPNSHash;
+        string DappDNSlinkURL;
+        string dappUnstoppableDomainURL;
+        string dappHandshakeURL;
+        string dappIPLDIPFSHash;
+        string[] testResultIPFSHashes;
+        string[] auditReportIPFSHashes;
     }
 
     struct AuditOrgDetails {

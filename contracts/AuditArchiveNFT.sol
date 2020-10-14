@@ -39,7 +39,9 @@ contract AuditArchiveNFT is AuditorControl, ERC721NonTransferable {
         auditOrg.auditingPlatform = IAuditingDatastore(_auditingPlatform);
     }
 
-    function setAuditingPlatform( address auditingPlatform ) public
+    function setAuditingPlatform( address _auditingPlatform ) public {
+        auditingPlatform = IAuditingPlatform(_auditingPlatform);
+    }
 
     function mint(address _recipient, bytes calldata _metaData) external onlyOwner {
         require(hasRole(MINTER_ROLE, _msgSender()), "ERC721PresetMinterPauserAutoId: must have minter role to mint");
